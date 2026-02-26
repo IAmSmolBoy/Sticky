@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sticky Note</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=DM+Sans:wght@300;400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --note-color: #FFF176;
+    --shadow-color: rgba(0,0,0,0.18);
+    --header-darken: rgba(0,0,0,0.08);
+    --text: #2c2c2c;
+    --radius: 3px;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .note {
+    width: 100%; height: 100%;
+    background: var(--note-color);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 1px 1px rgba(0,0,0,.15),
+      0 4px 8px rgba(0,0,0,.12),
+      0 10px 30px rgba(0,0,0,.1),
+      4px 4px 0 rgba(0,0,0,.04);
+    position: relative;
+    animation: popIn .18s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.85) translateY(8px); opacity: 0; }
+    to   { transform: scale(1)    translateY(0);   opacity: 1; }
+  }
+
+  /* ─── Tape effect at top ─────────────────────────────────── */
+  .note::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 60px; height: 22px;
+    background: rgba(255,255,255,0.55);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ─── Fold corner ────────────────────────────────────────── */
+  .note::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 22px; height: 22px;
+    background: linear-gradient(
+      225deg,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0.05) 50%,
+      transparent 50%
+    );
+    border-radius: 0 0 var(--radius) 0;
+    pointer-events: none;
+  }
+
+  /* ─── Header / drag handle ───────────────────────────────── */
+  .header {
+    -webkit-app-region: drag;
+    background: var(--header-darken);
+    padding: 8px 10px 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    cursor: grab;
+  }
+  .header:active { cursor: grabbing; }
+
+  .color-swatches {
+    -webkit-app-region: no-drag;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .swatch {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    transition: transform .12s, box-shadow .12s;
+    flex-shrink: 0;
+  }
+  .swatch:hover { transform: scale(1.3); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  .swatch.active { border-color: rgba(0,0,0,0.45); transform: scale(1.15); }
+
+  .spacer { flex: 1; }
+
+  .btn {
+    -webkit-app-region: no-drag;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: rgba(0,0,0,0.4);
+    transition: background .12s, color .12s, transform .1s;
+  }
+  .btn:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.8); transform: scale(1.1); }
+  .btn:active { transform: scale(0.9); }
+
+  /* ─── Textarea ───────────────────────────────────────────── */
+  .content-wrap {
+    flex: 1;
+    padding: 10px 14px 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  textarea {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--text);
+    caret-color: rgba(0,0,0,0.5);
+    user-select: text;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.15) transparent;
+  }
+  textarea::placeholder {
+    color: rgba(0,0,0,0.28);
+    font-style: italic;
+  }
+  textarea::-webkit-scrollbar { width: 4px; }
+  textarea::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+  /* ─── Footer ─────────────────────────────────────────────── */
+  .footer {
+    padding: 3px 14px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .timestamp {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    color: rgba(0,0,0,0.35);
+    flex: 1;
+  }
+
+  .char-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: rgba(0,0,0,0.28);
+  }
+
+  /* ─── Color themes ───────────────────────────────────────── */
+  .theme-yellow  { --note-color: #FFF176; }
+  .theme-green   { --note-color: #A5D6A7; }
+  .theme-blue    { --note-color: #90CAF9; }
+  .theme-pink    { --note-color: #F48FB1; }
+  .theme-orange  { --note-color: #FFCC80; }
+  .theme-white   { --note-color: #FAFAFA; }
+
+  /* Slight paper texture */
+  .note-texture {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+  }
+</style>
+</head>
+<body>
+
+<div class="note" id="note">
+  <div class="note-texture"></div>
+
+  <div class="header" id="header">
+    <div class="color-swatches" id="swatches">
+      <div class="swatch" data-color="#FFF176" data-theme="theme-yellow" style="background:#FFF176" title="Yellow"></div>
+      <div class="swatch" data-color="#A5D6A7" data-theme="theme-green"  style="background:#A5D6A7" title="Green"></div>
+      <div class="swatch" data-color="#90CAF9" data-theme="theme-blue"   style="background:#90CAF9" title="Blue"></div>
+      <div class="swatch" data-color="#F48FB1" data-theme="theme-pink"   style="background:#F48FB1" title="Pink"></div>
+      <div class="swatch" data-color="#FFCC80" data-theme="theme-orange" style="background:#FFCC80" title="Orange"></div>
+      <div class="swatch" data-color="#FAFAFA" data-theme="theme-white"  style="background:#FAFAFA" title="White"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="btn-new"  title="New note">＋</button>
+    <button class="btn" id="btn-close" title="Close">✕</button>
+    <button class="btn" id="btn-delete" title="Delete note" style="color:rgba(200,50,50,0.45)">🗑</button>
+  </div>
+
+  <div class="content-wrap">
+    <textarea
+      id="textarea"
+      placeholder="Write something…"
+      spellcheck="true"
+    ></textarea>
+  </div>
+
+  <div class="footer">
+    <span class="timestamp" id="timestamp"></span>
+    <span class="char-count" id="char-count"></span>
+  </div>
+</div>
+
+<script>
+  const COLORS = {
+    '#FFF176': 'theme-yellow',
+    '#A5D6A7': 'theme-green',
+    '#90CAF9': 'theme-blue',
+    '#F48FB1': 'theme-pink',
+    '#FFCC80': 'theme-orange',
+    '#FAFAFA': 'theme-white',
+  };
+
+  let currentNote = null;
+  const noteEl    = document.getElementById('note');
+  const textarea  = document.getElementById('textarea');
+  const timestamp = document.getElementById('timestamp');
+  const charCount = document.getElementById('char-count');
+
+  // ── Load note data from main ───────────────────────────────
+  window.noteAPI.onLoadNote((note) => {
+    currentNote = note;
+
+    // Set theme
+    const themeClass = COLORS[note.color] ?? 'theme-yellow';
+    noteEl.className = `note ${themeClass}`;
+
+    // Mark active swatch
+    document.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color === note.color);
+    });
+
+    textarea.value = note.content || '';
+    updateTimestamp(note.createdAt);
+    updateCharCount();
+    textarea.focus();
+  });
+
+  // ── Textarea events ────────────────────────────────────────
+  let saveTimer;
+  textarea.addEventListener('input', () => {
+    updateCharCount();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, 500);
+  });
+
+  function save() {
+    if (!currentNote) return;
+    window.noteAPI.updateNote({
+      id: currentNote.id,
+      content: textarea.value,
+      color: currentNote.color
+    });
+  }
+
+  // ── Color swatches ─────────────────────────────────────────
+  document.getElementById('swatches').addEventListener('click', e => {
+    const swatch = e.target.closest('.swatch');
+    if (!swatch || !currentNote) return;
+
+    const newColor = swatch.dataset.color;
+    const newTheme = swatch.dataset.theme;
+    currentNote.color = newColor;
+
+    noteEl.className = `note ${newTheme}`;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    swatch.classList.add('active');
+    save();
+  });
+
+  // ── Buttons ────────────────────────────────────────────────
+  document.getElementById('btn-new').addEventListener('click', () => {
+    window.noteAPI.newNote();
+  });
+
+  document.getElementById('btn-close').addEventListener('click', () => {
+    save();
+    window.noteAPI.closeNote(currentNote.id);
+  });
+
+  document.getElementById('btn-delete').addEventListener('click', () => {
+    if (!currentNote) return;
+    const confirmDelete = confirm('Delete this note?');
+    if (confirmDelete) window.noteAPI.deleteNote(currentNote.id);
+  });
+
+  // ── Helpers ────────────────────────────────────────────────
+  function updateTimestamp(iso) {
+    if (!iso) return;
+    const d = new Date(iso);
+    timestamp.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function updateCharCount() {
+    const len = textarea.value.length;
+    charCount.textContent = len > 0 ? `${len} chars` : '';
+  }
+</script>
+</body>
+</html>
