@@ -13,6 +13,7 @@
     --note-color: #FFF176;
     --shadow-color: rgba(0,0,0,0.18);
     --header-darken: rgba(0,0,0,0.08);
+    --dropdown-color: #E5D86A;
     --text: #2c2c2c;
     --radius: 3px;
   }
@@ -45,7 +46,7 @@
   }
 
   /* ─── Tape effect at top ─────────────────────────────────── */
-  .note::before {
+  .sticker {
     content: '';
     position: absolute;
     top: -10px;
@@ -85,6 +86,8 @@
     gap: 6px;
     flex-shrink: 0;
     cursor: grab;
+    z-index: 0;
+    position: relative;
   }
   .header:active { cursor: grabbing; }
 
@@ -122,6 +125,38 @@
   }
   .btn:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.8); transform: scale(1.1); }
   .btn:active { transform: scale(0.9); }
+
+  .headers {
+    position: relative;
+  }
+
+  #headerdropdown {
+    background: var(--dropdown-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow: hidden;
+    height: 0;
+    transition: height .2s ease;
+    padding: 0;
+    position: absolute;
+    z-index: 5;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  #headerdropdown.expanded {
+    height: 100%;
+    padding: 8px 10px 6px;
+  }
+
+  #header.contracted {
+    height: 0;
+    padding: 0;
+    top: -10px;
+  }
 
   /* ─── Textarea ───────────────────────────────────────────── */
   .content-wrap {
@@ -203,21 +238,39 @@
 <body>
 
 <div class="note" id="note">
+  <div class="sticker"></div>
   <div class="note-texture"></div>
 
-  <div class="header" id="header">
-    <div class="color-swatches" id="swatches">
-      <div class="swatch" data-color="#FFF176" data-theme="theme-yellow" style="background:#FFF176" title="Yellow"></div>
-      <div class="swatch" data-color="#A5D6A7" data-theme="theme-green"  style="background:#A5D6A7" title="Green"></div>
-      <div class="swatch" data-color="#90CAF9" data-theme="theme-blue"   style="background:#90CAF9" title="Blue"></div>
-      <div class="swatch" data-color="#F48FB1" data-theme="theme-pink"   style="background:#F48FB1" title="Pink"></div>
-      <div class="swatch" data-color="#FFCC80" data-theme="theme-orange" style="background:#FFCC80" title="Orange"></div>
-      <div class="swatch" data-color="#FAFAFA" data-theme="theme-white"  style="background:#FAFAFA" title="White"></div>
+  <div class="headers">
+    <div class="header" id="header">
+      <div class="color-swatches" id="swatches">
+        <div class="swatch" data-color="#FFF176" data-theme="theme-yellow" style="background:#FFF176" title="Yellow"></div>
+        <div class="swatch" data-color="#A5D6A7" data-theme="theme-green"  style="background:#A5D6A7" title="Green"></div>
+        <div class="swatch" data-color="#90CAF9" data-theme="theme-blue"   style="background:#90CAF9" title="Blue"></div>
+        <div class="swatch" data-color="#F48FB1" data-theme="theme-pink"   style="background:#F48FB1" title="Pink"></div>
+        <div class="swatch" data-color="#FFCC80" data-theme="theme-orange" style="background:#FFCC80" title="Orange"></div>
+        <div class="swatch" data-color="#FAFAFA" data-theme="theme-white"  style="background:#FAFAFA" title="White"></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="btn-new"  title="New note">＋</button>
+      <button class="btn" id="btn-close" title="Close">✕</button>
+      <button class="btn" id="btn-delete" title="Delete note" style="color:rgba(200,50,50,0.45)">🗑</button>
     </div>
-    <div class="spacer"></div>
-    <button class="btn" id="btn-new"  title="New note">＋</button>
-    <button class="btn" id="btn-close" title="Close">✕</button>
-    <button class="btn" id="btn-delete" title="Delete note" style="color:rgba(200,50,50,0.45)">🗑</button>
+
+    <div class="header dropdown" id="headerdropdown">
+      <div class="color-swatches" id="swatches">
+        <!-- <div class="swatch" data-color="#FFF176" data-theme="theme-yellow" style="background:#FFF176" title="Yellow"></div>
+        <div class="swatch" data-color="#A5D6A7" data-theme="theme-green"  style="background:#A5D6A7" title="Green"></div>
+        <div class="swatch" data-color="#90CAF9" data-theme="theme-blue"   style="background:#90CAF9" title="Blue"></div>
+        <div class="swatch" data-color="#F48FB1" data-theme="theme-pink"   style="background:#F48FB1" title="Pink"></div>
+        <div class="swatch" data-color="#FFCC80" data-theme="theme-orange" style="background:#FFCC80" title="Orange"></div>
+        <div class="swatch" data-color="#FAFAFA" data-theme="theme-white"  style="background:#FAFAFA" title="White"></div> -->
+      </div>
+      <div class="spacer"></div>
+      <!-- <button class="btn" id="btn-new"  title="New note">＋</button>
+      <button class="btn" id="btn-close" title="Close">✕</button>
+      <button class="btn" id="btn-delete" title="Delete note" style="color:rgba(200,50,50,0.45)">🗑</button> -->
+    </div>
   </div>
 
   <div class="content-wrap">
@@ -251,23 +304,23 @@
   const charCount = document.getElementById('char-count');
 
   // ── Load note data from main ───────────────────────────────
-  window.noteAPI.onLoadNote((note) => {
-    currentNote = note;
+  // window.noteAPI.onLoadNote((note) => {
+  //   currentNote = note;
 
-    // Set theme
-    const themeClass = COLORS[note.color] ?? 'theme-yellow';
-    noteEl.className = `note ${themeClass}`;
+  //   // Set theme
+  //   const themeClass = COLORS[note.color] ?? 'theme-yellow';
+  //   noteEl.className = `note ${themeClass}`;
 
-    // Mark active swatch
-    document.querySelectorAll('.swatch').forEach(s => {
-      s.classList.toggle('active', s.dataset.color === note.color);
-    });
+  //   // Mark active swatch
+  //   document.querySelectorAll('.swatch').forEach(s => {
+  //     s.classList.toggle('active', s.dataset.color === note.color);
+  //   });
 
-    textarea.value = note.content || '';
-    updateTimestamp(note.createdAt);
-    updateCharCount();
-    textarea.focus();
-  });
+  //   textarea.value = note.content || '';
+  //   updateTimestamp(note.createdAt);
+  //   updateCharCount();
+  //   textarea.focus();
+  // });
 
   // ── Textarea events ────────────────────────────────────────
   let saveTimer;
@@ -316,6 +369,18 @@
     const confirmDelete = confirm('Delete this note?');
     if (confirmDelete) window.noteAPI.deleteNote(currentNote.id);
   });
+
+  const headers = [
+    document.getElementById('header'),
+    document.getElementById('headerdropdown')
+  ]
+
+  headers.forEach(header => {
+    header.addEventListener('dblclick', () => {
+      // On double-click, extend dropdown
+      document.getElementById('headerdropdown').classList.toggle('expanded');
+    });
+  })
 
   // ── Helpers ────────────────────────────────────────────────
   function updateTimestamp(iso) {

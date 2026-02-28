@@ -2,9 +2,11 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen } = require
 const path = require('path');
 const fs = require('fs');
 const AutoLaunch = require('auto-launch');
+const dotenv = require('dotenv');
+dotenv.config();
 
 // ── Paths ──────────────────────────────────────────────────────────────────
-const DATA_FILE = path.join(app.getPath('userData'), 'notes.json');
+const DATA_FILE = path.join(process.env.STICKY_DATA_DIR || app.getPath('userData'), 'notes.json');
 
 // ── Auto-launch setup ──────────────────────────────────────────────────────
 const autoLauncher = new AutoLaunch({ name: 'StickyNotes', isHidden: true });
@@ -138,7 +140,7 @@ app.whenReady().then(() => {
   if (notes.length === 0) {
     const welcome = {
       id: Date.now().toString(),
-      content: '👋 Welcome to Sticky Notes!\n\n• Click the tray icon to create a new note\n• Drag the header to move\n• Resize from any edge\n• Pick a color from the palette',
+      content: '👋 Welcome to Sticky Notes!\n\n• Click the tray icon to create a new note\n• Drag the header to move\n• Resize from any edge\n• Pick a color from the palette\n• Double-click the header to access more controls',
       color: '#FFF176',
       x: 60, y: 60, width: 320, height: 340,
       createdAt: new Date().toISOString()
