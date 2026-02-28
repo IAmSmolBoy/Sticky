@@ -2,8 +2,7 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen } = require
 const path = require('path');
 const fs = require('fs');
 const AutoLaunch = require('auto-launch');
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config({ quiet: true });
 
 // ── Paths ──────────────────────────────────────────────────────────────────
 const DATA_FILE = path.join(process.env.STICKY_DATA_DIR || app.getPath('userData'), 'notes.json');

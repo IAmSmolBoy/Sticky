@@ -304,23 +304,23 @@
   const charCount = document.getElementById('char-count');
 
   // ── Load note data from main ───────────────────────────────
-  // window.noteAPI.onLoadNote((note) => {
-  //   currentNote = note;
+  window.noteAPI.onLoadNote((note) => {
+    currentNote = note;
 
-  //   // Set theme
-  //   const themeClass = COLORS[note.color] ?? 'theme-yellow';
-  //   noteEl.className = `note ${themeClass}`;
+    // Set theme
+    const themeClass = COLORS[note.color] ?? 'theme-yellow';
+    noteEl.className = `note ${themeClass}`;
 
-  //   // Mark active swatch
-  //   document.querySelectorAll('.swatch').forEach(s => {
-  //     s.classList.toggle('active', s.dataset.color === note.color);
-  //   });
+    // Mark active swatch
+    document.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color === note.color);
+    });
 
-  //   textarea.value = note.content || '';
-  //   updateTimestamp(note.createdAt);
-  //   updateCharCount();
-  //   textarea.focus();
-  // });
+    textarea.value = note.content || '';
+    updateTimestamp(note.createdAt);
+    updateCharCount();
+    textarea.focus();
+  });
 
   // ── Textarea events ────────────────────────────────────────
   let saveTimer;
